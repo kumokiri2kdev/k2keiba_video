@@ -143,6 +143,8 @@ class RpaJRAVideo(object):
     def observe_video(self):
         logger.info('Video Start')
 
+        loading_timer = 0
+
         pic_dir = self.get_pic_dir_path()
         for i in range(480):
             try:
@@ -151,8 +153,22 @@ class RpaJRAVideo(object):
                 break
             except exceptions.TimeoutException:
                 self.browser.get_screenshot_as_file('{}/test_{:04d}.png'.format(pic_dir, i))
+                try :
+                    loading = self.browser.find_element_by_class_name('eq-center-icon-loading')
+                    if loading == None or loading.is_displayed() == False:
+                        loading_timer = 0
+                    else:
+                        logger.info('Loading Timer is shown')
+                        loading_timer += 1
+                except exceptions.NoSuchElementException:
+                    loading_timer = 0
+
                 if i % 10 == 0:
                     logger.info('Captured[{:04d}]'.format(i))
+
+                if loading_timer > 20:
+                    logger.error('Ugh Maybe Never End')
+                    raise RpaJRAVideoPlayObserveTimeout
         else:
             logger.error('Ugh Never End')
             raise RpaJRAVideoPlayObserveTimeout
@@ -169,16 +185,19 @@ class RpaJRAVideo(object):
         self.browser.switch_to_window(handles[1])
 
         for i in range(10):
-            WebDriverWait(self.browser, 30).until(EC.presence_of_element_located((By.TAG_NAME, 'iframe')))
-            logger.debug('iframe comes up')
-            iframe = self.browser.find_elements_by_tag_name('iframe')
-            if len(iframe) >= 1:
-                logger.debug('switch')
-                self.browser.switch_to.frame(iframe[0])
-                break
-            else:
-                logger.info("No iframe")
-                sleep(1)
+            try :
+                WebDriverWait(self.browser, 5).until(EC.presence_of_element_located((By.TAG_NAME, 'iframe')))
+                logger.debug('iframe comes up')
+                iframe = self.browser.find_elements_by_tag_name('iframe')
+                if len(iframe) >= 1:
+                    logger.debug('switch')
+                    self.browser.switch_to.frame(iframe[0])
+                    break
+                else:
+                    logger.info("No iframe")
+                    sleep(1)
+            except exceptions.TimeoutException:
+                logger.info('exceptions.TimeoutException happens, retry')
         else:
             self.browser.close()
             self.browser.switch_to_window(handles[0])
