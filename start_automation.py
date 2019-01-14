@@ -63,12 +63,12 @@ if __name__ == '__main__':
     rpa = rpa.RpaJRAVideoFireFox()
 
     for race in races:
-        try:
-            logger.info('Race ID : {}'.format(race))
-            rpa.start_automated_process(race)
-        except rpa.RpaJRAVideoPlayRetryTimeOut:
-            print('RpaJRAVideoPlayRetryTimeOut')
-            break
+        for i in range(2):
+            try:
+                logger.info('Race ID : {}'.format(race))
+                rpa.start_automated_process(race)
+            except rpa.RpaJRAVideoPlayFail:
+                logger.warning('RpaJRAVideoPlayFail')
 
 
 

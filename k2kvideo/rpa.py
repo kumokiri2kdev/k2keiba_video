@@ -46,6 +46,11 @@ class RpaJRAVideoPlayContentError(Exception):
 class RpaJRAVideoPlayRetryTimeOut(Exception):
     pass
 
+class RpaJRAVideoPlayObserveTimeout(Exception):
+    pass
+
+class RpaJRAVideoPlayFail(Exception):
+    pass
 
 class RpaJRAVideo(object):
     def get_driver(self):
@@ -139,7 +144,7 @@ class RpaJRAVideo(object):
         logger.info('Video Start')
 
         pic_dir = self.get_pic_dir_path()
-        for i in range(1000):
+        for i in range(480):
             try:
                 WebDriverWait(self.browser, SCREEN_SHOT_INTERVAL).until(
                     EC.visibility_of_element_located((By.CLASS_NAME, 'eq-center-icon-replay')))
@@ -149,7 +154,8 @@ class RpaJRAVideo(object):
                 if i % 10 == 0:
                     logger.info('Captured[{:04d}]'.format(i))
         else:
-            logger.info('Ugh Never End')
+            logger.error('Ugh Never End')
+            raise RpaJRAVideoPlayObserveTimeout
 
         logger.info('Video End')
 
@@ -205,7 +211,7 @@ class RpaJRAVideo(object):
             self.browser.close()
             self.browser.switch_to_window(self.browser.window_handles[0])
             self.browser.quit()
-            raise RpaJRAVideoPlayRetryTimeOut
+            raise RpaJRAVideoPlayFail
 
         self.safty_wait()
 
@@ -222,10 +228,16 @@ class RpaJRAVideo(object):
             self.browser.close()
             self.browser.switch_to_window(self.browser.window_handles[0])
             self.browser.quit()
-            raise RpaJRAVideoPlayRetryTimeOut
+            raise RpaJRAVideoPlayFail
 
-
-        self.observe_video()
+        try :
+            self.observe_video()
+        except RpaJRAVideoPlayObserveTimeout:
+            self.browser.close()
+            self.browser.switch_to_window(self.browser.window_handles[0])
+            self.browser.quit()
+            logger.info('Retry Play Video [{}]'.format(i))
+            raise RpaJRAVideoPlayFail
 
         self.browser.close()
         self.browser.switch_to_window(self.browser.window_handles[0])
