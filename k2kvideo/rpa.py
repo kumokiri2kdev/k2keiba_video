@@ -184,7 +184,7 @@ class RpaJRAVideo(object):
 
         self.browser.switch_to_window(handles[1])
 
-        for i in range(10):
+        for i in range(3):
             try :
                 WebDriverWait(self.browser, 5).until(EC.presence_of_element_located((By.TAG_NAME, 'iframe')))
                 logger.debug('iframe comes up')
