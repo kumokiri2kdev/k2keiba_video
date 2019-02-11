@@ -1,1 +1,2 @@
-include k2kvideo/finalized_model.sav
+include k2kvideo/assets
+include k2kvideo/assets/finalized_model.sav

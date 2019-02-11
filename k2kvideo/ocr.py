@@ -61,7 +61,7 @@ class RpaJRAVideoReadTime():
         if os.path.isfile(filename) == False:
             import k2kvideo
             if type(k2kvideo.__path__) == list:
-                filename = '{}/{}'.format(k2kvideo.__path__[0], filename)
+                filename = '{}/assets/{}'.format(k2kvideo.__path__[0], filename)
                 if os.path.isfile(filename) == False:
                     logging.error('Serialized file "{}" not found'.format(filename))
                     # ToDo Raise an error
