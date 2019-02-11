@@ -47,14 +47,13 @@ class RpaJRAVideoReadTime():
     SECOND_SEGMENT_OFFSET = UNIT_WIDTH
     THIRD_SEGMENT_OFFSET = (SECOND_SEGMENT_OFFSET + 11 + UNIT_WIDTH)
 
+    PIC_DIRE_PATH = './pic'
 
     def __init__(self, race_id, rcw=False):
         if rcw:
             self.offset = self.TIME_SEG_RCW_OFFSET
         else:
             self.offset = 0
-
-        self.dir = '/Users/seiichikataoka/PycharmProjects/k2keiba_video/pic'
 
         self.race_id = race_id.replace('/', '-')
 
@@ -119,7 +118,7 @@ class RpaJRAVideoReadTime():
 
     def read_time(self):
 
-        files = sorted(glob.glob('{}/{}/*.png'.format(self.dir, self.race_id)))
+        files = sorted(glob.glob('{}/{}/*.png'.format(self.PIC_DIRE_PATH, self.race_id)))
 
         self.time_stamps = []
 
