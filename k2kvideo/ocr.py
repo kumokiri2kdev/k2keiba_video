@@ -132,6 +132,8 @@ class RpaJRAVideoReadTime():
             }
             self.time_stamps.append(time_stamp)
 
+        return self.time_stamps
+
     def find_snap_shop(self, laps):
         time_output = []
 
@@ -156,4 +158,18 @@ class RpaJRAVideoReadTime():
 
         return time_output
 
+    def get_trimed_list(self):
+        time_output = []
 
+        files = sorted(glob.glob('{}/{}/test_*.png'.format(self.PIC_DIRE_PATH, self.race_id)))
+
+        initial_index  = -1
+
+        for i, filename in enumerate(files):
+            timestamp, timestamp_ss = self.read_from_file(filename)
+            if timestamp_ss >= 1:
+                initial_index = i - (timestamp_ss * 4)
+                initial_index = 0 if initial_index < 0 else initial_index
+                break
+
+        return files[initial_index:-1]
