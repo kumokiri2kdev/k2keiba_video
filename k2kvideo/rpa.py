@@ -12,6 +12,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 FILE_PATH = '/tmp/k2kvideo_landing_page.html'
 PIC_DIRE_PATH = './pic/{}'
 SCREEN_SHOT_INTERVAL = 0.5
+MAX_SCREEN_SHOT_COUNTER = (5 * 60 * 4)
 
 logging.config.dictConfig({
     'version': 1,
@@ -182,6 +183,34 @@ class RpaJRAVideo(object):
 
         logger.info('Video End')
 
+    def capture_video_aqap(self):
+        logger.info('Video Start')
+        loading_timer = 0
+
+        pic_dir = self.get_pic_dir_path()
+
+        for i in range(MAX_SCREEN_SHOT_COUNTER):
+            self.browser.get_screenshot_as_file('{}/test_{:04d}.png'.format(pic_dir, i))
+            replay = self.browser.find_element_by_class_name('eq-center-icon-replay')
+            if replay != None and replay.is_displayed() == True:
+                break
+
+            if i % 10 == 0:
+                logger.info('Captured[{:04d}]'.format(i))
+
+            loading = self.browser.find_element_by_class_name('eq-center-icon-loading')
+            if loading == None or loading.is_displayed() == False:
+                loading_timer = 0
+            else:
+                logger.info('Loading Timer is shown')
+                loading_timer += 1
+
+            if loading_timer > 20:
+                logger.error('Ugh Maybe Never End')
+                raise RpaJRAVideoPlayObserveTimeout
+
+        logger.info('Video End')
+
     def play_jra_video(self):
         self.invoke_jra_video()
 
@@ -257,7 +286,7 @@ class RpaJRAVideo(object):
             raise RpaJRAVideoPlayFail
 
         try :
-            self.observe_video()
+            self.capture_video_aqap()
         except RpaJRAVideoPlayObserveTimeout:
             self.browser.close()
             self.browser.switch_to_window(self.browser.window_handles[0])
