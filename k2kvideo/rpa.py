@@ -136,7 +136,14 @@ class RpaJRAVideo(object):
 
     def wait_until_video_plays(self):
         try:
-            WebDriverWait(self.browser, 15).until(EC.invisibility_of_element((By.CLASS_NAME, 'eq-center-icon-loading')))
+            WebDriverWait(self.browser, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, 'eq-center-icon-play')))
+            eq_buttons = self.browser.find_elements_by_class_name('eq-center-icon-play')
+            if eq_buttons:
+                eq_buttons[0].click()
+            else:
+                logger.info('ElementNotInteractableException')
+                raise RpaJRAVideoPlayContentError
+
         except exceptions.TimeoutException:
             raise RpaJRAVideoPlayTimeout
 
