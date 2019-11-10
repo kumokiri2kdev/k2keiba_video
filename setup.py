@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='k2kvideo',
-    version='0.0.4',
+    version='0.0.5',
     packages=['k2kvideo'],
     url='',
     license='free',
