@@ -158,6 +158,27 @@ class RpaJRAVideoReadTime():
 
         return time_output
 
+    def get_histg(self, file):
+        img = cv2.imread(file)
+
+        histg = cv2.calcHist([img], [2], None, [256], [0, 256])
+
+        return histg
+
+    def find_scene_start(self, files):
+        files.reverse()
+
+        histg_p = None
+
+        for i, file in enumerate(files):
+            histg_c = self.get_histg(file)
+            if histg_p is not None:
+                histg_diff = cv2.compareHist(histg_c, histg_p, cv2.HISTCMP_CORREL)
+                if histg_diff < 0.6:
+                    return files[i-1]
+
+            histg_p = histg_c
+
     def get_trimed_list(self):
         time_output = []
 
@@ -168,8 +189,12 @@ class RpaJRAVideoReadTime():
         for i, filename in enumerate(files):
             timestamp, timestamp_ss = self.read_from_file(filename)
             if timestamp_ss >= 1:
-                initial_index = i - (timestamp_ss * 4)
+                initial_index = i
                 initial_index = 0 if initial_index < 0 else initial_index
+
+                scene_start = self.find_scene_start(files[:initial_index])
+                initial_index = files.index(scene_start)
+
                 break
 
         return files[initial_index:-1]
