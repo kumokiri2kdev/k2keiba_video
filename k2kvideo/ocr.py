@@ -34,7 +34,7 @@ class RpaJRAVideoReadTime():
         'top': 42,
         'bottom': 82,
         'left': 70,
-        'right': 168
+        'right': 168 + 26 + 11
     }
 
     TIME_SEG_RCW_OFFSET = 996
@@ -42,10 +42,11 @@ class RpaJRAVideoReadTime():
     UNIT_HIGHT = TIME_SEG['bottom'] - TIME_SEG['top']
     UNIT_WIDTH = 26
 
-    BASE_OFFSET = 72
+    BASE_OFFSET = 72 + 11 + 26
     FIRST_SEGMENT_OFFSET = 0
-    SECOND_SEGMENT_OFFSET = UNIT_WIDTH
-    THIRD_SEGMENT_OFFSET = (SECOND_SEGMENT_OFFSET + 11 + UNIT_WIDTH)
+    SECOND_SEGMENT_OFFSET = FIRST_SEGMENT_OFFSET + 11 + UNIT_WIDTH
+    THIRD_SEGMENT_OFFSET = (SECOND_SEGMENT_OFFSET + UNIT_WIDTH)
+    FORTH_SEGMENT_OFFSET = (THIRD_SEGMENT_OFFSET + 11 + UNIT_WIDTH)
 
     PIC_DIRE_PATH = './pic'
 
@@ -85,14 +86,18 @@ class RpaJRAVideoReadTime():
 
         digits = []
 
-        digits.append(img_gray[0:len(img_gray),
-                      self.BASE_OFFSET - 1: len(img_gray[0]) - 1])
-        digits.append(img_gray[0:len(img_gray),
+        digits.append(img_gray[0:self.UNIT_HIGHT,
+                      self.BASE_OFFSET - self.FIRST_SEGMENT_OFFSET - 1:
+                      len(img_gray[0]) - self.FIRST_SEGMENT_OFFSET - 1])
+        digits.append(img_gray[0:self.UNIT_HIGHT,
                       self.BASE_OFFSET - self.SECOND_SEGMENT_OFFSET - 1:
                       len(img_gray[0]) - self.SECOND_SEGMENT_OFFSET - 1])
-        digits.append(img_gray[0:len(img_gray),
+        digits.append(img_gray[0:self.UNIT_HIGHT,
                       self.BASE_OFFSET - self.THIRD_SEGMENT_OFFSET - 1:
                       len(img_gray[0]) - self.THIRD_SEGMENT_OFFSET - 1])
+        digits.append(img_gray[0:self.UNIT_HIGHT,
+                      self.BASE_OFFSET - self.FORTH_SEGMENT_OFFSET - 1:
+                      len(img_gray[0]) - self.FORTH_SEGMENT_OFFSET - 1])
 
         img_tgt = np.array(digits).reshape((-1, self.UNIT_HIGHT * self.UNIT_WIDTH))
         predicts = (self.clf.predict(img_tgt))
@@ -100,19 +105,24 @@ class RpaJRAVideoReadTime():
 
         time = ''
         time_int = 0
-        if predicts[2] != 'o':
-            time += predicts[2] + '.'
+        is_additinal_digit = False
+
+        if predicts[3] != 'o':
+            time += predicts[3] + '.'
             time_int += int(predicts[2]) * 60
+
+        if predicts[2] != 'o':
+            time += predicts[2]
+            time_int += int(predicts[1]) * 10
 
         if predicts[1] != 'o':
             time += predicts[1]
-            time_int += int(predicts[1]) * 10
+            time_int += int(predicts[1])
 
         if predicts[0] != 'o':
-            time += predicts[0]
-            time_int += int(predicts[0])
+            is_additinal_digit = True
 
-        return time, time_int
+        return time, time_int, is_additinal_digit
 
 
 
@@ -123,13 +133,17 @@ class RpaJRAVideoReadTime():
         self.time_stamps = []
 
         for file in files:
-            time, time_int = self.read_from_file(file)
+            time, time_int, is_addtional_digit = self.read_from_file(file)
             logger.debug('Time : {}. Sec : {}'.format(time, time_int))
             time_stamp = {
                 'file': file,
                 'ts': time_int,
                 'time': time
             }
+
+            if is_addtional_digit:
+                time_stamp['additional'] = True
+
             self.time_stamps.append(time_stamp)
 
         return self.time_stamps
@@ -187,7 +201,7 @@ class RpaJRAVideoReadTime():
         initial_index  = -1
 
         for i, filename in enumerate(files):
-            timestamp, timestamp_ss = self.read_from_file(filename)
+            timestamp, timestamp_ss, is_additional_digit = self.read_from_file(filename)
             if timestamp_ss >= 1:
                 initial_index = i
                 initial_index = 0 if initial_index < 0 else initial_index
