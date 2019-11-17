@@ -109,11 +109,11 @@ class RpaJRAVideoReadTime():
 
         if predicts[3] != 'o':
             time += predicts[3] + '.'
-            time_int += int(predicts[2]) * 60
+            time_int += int(predicts[3]) * 60
 
         if predicts[2] != 'o':
             time += predicts[2]
-            time_int += int(predicts[1]) * 10
+            time_int += int(predicts[2]) * 10
 
         if predicts[1] != 'o':
             time += predicts[1]
