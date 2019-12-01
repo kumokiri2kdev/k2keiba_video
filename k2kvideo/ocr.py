@@ -179,36 +179,63 @@ class RpaJRAVideoReadTime():
 
         return histg
 
-    def find_scene_start(self, files):
+    def find_scene_start(self, files, threashold = 0.8):
         files.reverse()
 
         histg_p = None
+
+        lowest = 100.0
+        candidate = files[0]
 
         for i, file in enumerate(files):
             histg_c = self.get_histg(file)
             if histg_p is not None:
                 histg_diff = cv2.compareHist(histg_c, histg_p, cv2.HISTCMP_CORREL)
-                if histg_diff < 0.6:
+                logging.debug('{} : {}'.format(file, histg_diff))
+                if histg_diff < threashold:
                     return files[i-1]
+                else:
+                    if lowest > histg_diff:
+                        lowest = histg_diff
+                        candidate = files[i-1]
+                        logging.debug('Lowest : {}'.format(candidate))
 
             histg_p = histg_c
 
+        return candidate
+
     def get_trimed_list(self):
-        time_output = []
 
         files = sorted(glob.glob('{}/{}/test_*.png'.format(self.PIC_DIRE_PATH, self.race_id)))
-
-        initial_index  = -1
 
         for i, filename in enumerate(files):
             timestamp, timestamp_ss, is_additional_digit = self.read_from_file(filename)
             if timestamp_ss >= 1:
-                initial_index = i
+                first_digit_index = i
+                first_digit_index = 0 if first_digit_index < 0 else first_digit_index
+                initial_index = first_digit_index - 20
                 initial_index = 0 if initial_index < 0 else initial_index
 
-                scene_start = self.find_scene_start(files[:initial_index])
+                scene_start = self.find_scene_start(files[initial_index:first_digit_index])
                 initial_index = files.index(scene_start)
 
                 break
 
-        return files[initial_index:-1]
+        trimed = files[initial_index - 1:]
+        trimed.reverse()
+
+        for i, filename in enumerate(trimed):
+            timestamp, timestamp_ss, is_additional_digit = self.read_from_file(filename)
+            if is_additional_digit == False:
+                goal_index = i
+                goal_index = 0 if goal_index < 0 else goal_index
+                last_index = goal_index - 20
+                last_index = 0 if last_index < 0 else last_index
+                scene_start = self.find_scene_start(trimed[last_index:goal_index],
+                                                    threashold=0.80)
+                initial_index = trimed.index(scene_start)
+                trimed = trimed[initial_index:-1]
+                trimed.reverse()
+                break
+
+        return trimed
