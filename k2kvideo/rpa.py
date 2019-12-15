@@ -60,6 +60,9 @@ class RpaJRAVideo(object):
     def safty_wait(self):
         sleep(0.5)
 
+    def safty_long_wait(self):
+        sleep(2.0)
+
     def get_pic_dir_path(self):
         return self.pic_dir
 
@@ -136,8 +139,10 @@ class RpaJRAVideo(object):
             raise RpaJRAVideoPlayContentError
 
     def wait_until_video_plays(self):
+
         try:
-            WebDriverWait(self.browser, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, 'eq-center-icon-play')))
+            WebDriverWait(self.browser, 10).until(EC.element_to_be_clickable(
+                (By.CLASS_NAME, 'eq-center-icon-play')))
             eq_buttons = self.browser.find_elements_by_class_name('eq-center-icon-play')
             if eq_buttons:
                 eq_buttons[0].click()
@@ -238,6 +243,8 @@ class RpaJRAVideo(object):
             self.browser.close()
             self.browser.switch_to_window(handles[0])
             raise RpaJRAVideoPlayTimeout
+
+        self.safty_long_wait()
 
         self.set_high_quality()
 
